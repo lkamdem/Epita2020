@@ -1,0 +1,122 @@
+design pattern factory
+design pattern observer (uitilisé pour les architectures réactives) ==> des qu'il y a un changement sur le serveur, il informe tous ses abonnés
+design pattern singleton: dans le code, on peut avoir qu'un seule instance de la classe.
+
+
+Spring c'est la reponse à la lourdeur JEE.
+le container SPring permets la gestion des beans (creation, modif, suppression)
+
+
+- Si l'application n'est pas stateless, on perd par rapport au principe de scalabilite.
+- Stateless: c'est à dire qu'on ne gère pas l'Etat de l'utilisateur ( la session par exemple) ainsi, les requetes de 
+l'utilisateur peuvent être distribué sur n'importe quelle instance, sans s'inquieter de trouver le serveur dans lequel l'utilisateur a déjà une session ouverte
+
+
+Les Beans de Spring, par defaut suivent le design pattern singleton: par defaut, il ne peut y avoir qu'une seule instance d'un objet declaré en tant que beans SPRING.
+
+Exemple de Conteneur: Tomcat.
+
+
+Spring boot est une simplification de spring.
+Les beans spring sont tous crée au démarrage de l'appli, et stocker dans une bibliothèque ApplicationContext, ensuite pendant l'exécution, on peut faire appel à l'un ou l'autre.
+Cela nous evite de devoir gerer les instanciations des objets que nous avons déclaré en tant que beans.
+
+un javaBeans est une spécification java. la construction d'une classe java doit respecter certaines règles, pour étre considéré comme une java beans.
+Par exemple, les getteurs et setteur sont obligatoire dans une classe, pour que la classe soit un javabeans.
+
+Pour les entités JPA, les getteur et setteur sont obligatoire également, on peut dont dire que ces entités sont des javaBeans.
+
+
+un bean Spring, est un élement de notre application, sur lequel par notre anotation, on delegue l'instanciation à Spring.
+le bean spring a ses propres règles. par exemple, ils respectent le design pattern singleton, ce qui n'est pas le cas des javabean.
+
+On parle de couplage fort entre 2 classes, lorsqu'elles sont fortement interdépendante.
+Par exemple, une classe, qui prend un autre classe en tant qu'attribut.
+il est alors difficile de tester la classe maitre, sans une instance de la classe esclave.
+
+pour éviter ces couplage fort, la solution proposé par Spring est l'utilisation des interfaces.
+en effet, avec Spring, pour travailler avec un objet possedant un savoir-faire, on déclare une interface que l'objet doit implémenter.
+Spring injecte dynamiquement un objet implémentant cette interface.(l'objet est déclaré dans un fichier xml de configuration, par defaut c'est le fichier applicationContext.xml)
+
+Avec un couplage faible, la classe maitre prends en attribut, l'interface implémenté par la classe esclave.
+
+
+Avec Spring, les beans sont les élements de mon application pour lesquels je laisser la gestion à SPRING.
+Il existe plusieurs façon de déclaré ces beans à SPRING:
+-Soit dans un fichier de configuration XML (applicationContext.xml)
+	<bean name="Douglas" class="com.example.Musicien">
+        	<property name="morceau" value="Vive le vent ..." />
+        	<property name="instrument" ref="piano" />
+    	</bean>
+La déclaration ci-dessus, correspond à une classe Musisien, contenant 2 attributs, l'un de type String (morceau) et l'autre de type Intrument (instrument)
+avec "ref=nom_beans", on fait reférence à un autre beans déclaré dans le fichier xml.
+
+-Soit par des anotations dans les classes (mais pour cela, il faut quand meme une ligne dans le fichier paramètre xml, pour activer le scan des anotations)
+	<context:annotation-config />
+	<context:component-scan base-package="nom du package contenant les beans" />
+Les anotations les plus utilisé de SPRING, sont peu nombreuse:
+@Component ==> @Service, @Repository et @Controller sont des spécialisation de @Component: ils restent donc des Components avant tout 
+@Autowired
+@Qualifier
+@Required
+@Configurable
+
+
+Ainsi Spring necessite toujours un fichier de configuration xml.
+l'alternative à ce fichier xml, utilise du code JAVA, mais cette approche est déconseillé.
+
+
+Dans la pratique, les 2 possibilités de déclaration et injection des beans sont souvent utilisé dans un meme projet.
+On parle alors de mode mixte.
+Soit on fait la déclaration des beans dans le fichier xml et on fait l'injection par des annoations @Autowired dans les composants.
+Soit on fait les annotations @Component, sur les classes à traiter en tant que beans, et on fait l'injection dans le fichier xml.
+
+Les SETTERS sont inutiles sur les attributs annoté avec @Autowired. Spring ne les utilise pas pour l'injection.
+
+l'annotation @Autowired peut être positionner sur un contructeur, cela indique alors à SPRING quel constructeur doit être utilisé pour la création du bean.
+Cela est donc inutile si le bean n'a qu'un seul constructeur.
+
+l'annoation @Qualifier, permet de gerer l'ambiguité sur l'annotation @Autowired, lorsque plusieurs bean implémente l'interface demandé.
+il est alors possible de completer l'annotation @Autowired, avec @Qualifier("nom de l'implémentation souhaité")
+
+pour se débarasser des fichier XML avec SPRING; on doit utiliser de nouvelle annotation.
+@Configuration  ==> Sur la classe java de configuration, dans laquelle nous pourrons déclarer les différents beans
+@Bean ==> sur chaque bean déclaré dans la classe de configuration
+Avec cette methode, ApplicationContext s'obtient avec AnnotationConfigApplicationContext(classeConfig.class)
+
+
+Gestion des exceptions dans une API REST.
+il est possible de factoriser la gestion des exceptions de mon API dans une classe spécifique (@ControllerAdvice)
+cette classe peut être au même niveau que la classe main.
+cette classe etends ResponseEntityExceptionHandler
+Dans cette classe, on défini une methode pour chaque type d'exception qu'on souhaite "catcher", cette methode défini ce que doit faire l'application sur cette Exception.
+on y contruit le message Http retour: status + body
+
+
+Avec Spring, toutes les Exceptions lié à la base de donnée, quelques soit le driver utilisés, sont retourné en tant que DataAccessException.
+Ainsi, on n'a pas à modifier nos traitements si on change d'implémentation pour la base de donnée.
+
+Dans la couche domaine, on TESTE les règles de gestion METIER.
+======================================================================
+
+@SpringBootTest est plus generique que @WebMvcTest
+avec @webmvcTest, on évite certaine chose au démarrage du contecte spring.
+pour des débutant comme nous, privilégier @SpringBootTest ou rien du tout (rien du tout, pour les test unitaire, qui n'ont pas besoin de contexte spring)
+
+
+Dans la couche application, chaque méthode illustre un useCase. 
+Dans une certaine mesure on peut dire que cette couche fait partie du domaine, mais le Framework nous oblige à y mettre un peu de technique.
+
+tout comme Jpa nous sert à accesser au BDD, l'appel à une autre API externe, peut se via un RestTemplate (d'autre outils existe, mais celui ci est le plus utilisé)
+
+
+@SpringbootApplication ==> on indique la liste des package des 4 couches)
+@EnableJparepository ==> on indique le package infra
+@EntityScan ==> on indique le package du domaine
+
+
+
+
+
+
+
